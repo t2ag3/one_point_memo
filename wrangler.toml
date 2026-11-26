@@ -1,0 +1,24 @@
+# 一口メモ道場の Cloudflare Pages の設定（README.md の手順で使う）
+# プロジェクトは、コマンドの --project-name hitokuchi-dojo で指定する
+pages_build_output_dir = "public"
+compatibility_date = "2026-11-01"
+
+[vars]
+# AI のモデル（OpenRouter のモデル ID）。相談者と採点で別々に変えられる
+MODEL_CONSULT = "nvidia/nemotron-3-ultra-550b-a55b:free"
+MODEL_GRADE = "nvidia/nemotron-3-ultra-550b-a55b:free"
+# 最初のモデルが使えないときに試す予備のモデル（カンマ区切り。空なら使わない）
+MODEL_FALLBACKS = ""
+# "0" にすると、JSON の形の指定（response_format）を送らない（モデルが対応していないとき）
+JSON_SCHEMA = "1"
+MAX_TOKENS = "4000"
+# 1 日の回数の上限（D1 を設定したときだけ効く）
+DAILY_LIMIT_PER_IP = "60"
+DAILY_LIMIT_TOTAL = "2000"
+
+# 1 日の回数制限（D1）を使うときは、README の「D1 を作る」の手順で、ここに d1_databases の設定を足す
+
+# 秘密の値は、このファイルに書かない。次のコマンドで入れる（README 参照）
+#   npx wrangler pages secret put OPENROUTER_API_KEY --project-name hitokuchi-dojo
+#   npx wrangler pages secret put SESSION_SECRET --project-name hitokuchi-dojo
+#   npx wrangler pages secret put TURNSTILE_SECRET --project-name hitokuchi-dojo   （Turnstile を使うときだけ）

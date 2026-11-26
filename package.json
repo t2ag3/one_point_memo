@@ -1,0 +1,10 @@
+{
+  "name": "hitokuchi-dojo-cloudflare",
+  "private": true,
+  "type": "module",
+  "description": "一口メモ道場の Cloudflare 版（Pages＋Pages Functions）。依存するパッケージはない",
+  "scripts": {
+    "test": "node --test test/",
+    "smoke": "node scripts/smoke.mjs"
+  }
+}
