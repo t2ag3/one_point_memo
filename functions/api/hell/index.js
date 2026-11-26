@@ -1,4 +1,4 @@
-// POST /api/hell：地獄級を始める（相談者とページを選び、最初の相談を作る）
+// POST /api/hell：地獄級を始める（相談者とページを選び、1 人目の最初の相談を作る）
 import { clientIp } from "../../../lib/guard.js";
 import { handle, json, readJson } from "../../../lib/http.js";
 import { start } from "../../../lib/service.js";

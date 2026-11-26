@@ -34,15 +34,15 @@ async function step(label, fn) {
 }
 
 console.log(`相談者のモデル：${env.MODEL_CONSULT || DEFAULT_MODEL}／採点のモデル：${env.MODEL_GRADE || DEFAULT_MODEL}`);
-let r = await step("最初の相談", () => service.start({ genres: [genre], consultants: 1 }, env, "smoke"));
-const c = () => r.view.consultants[0];
-console.log(`相談者：${c().persona.role}（${c().genre}）\n${c().turns.at(-1).text}`);
+const started = await step("最初の相談", () => service.start({ genres: [genre], consultants: 1 }, env, "smoke"));
+const c = started.view.consultants[0];
+console.log(`相談者：${c.persona.role}（${c.genre}）\n${c.turns.at(-1).text}`);
 console.log(`職員：${answer1}`);
-r = await step("追加の質問", () => service.answer({ token: r.token, index: 0, text: answer1 }, env, "smoke"));
-console.log(`相談者：${c().turns.at(-1).text}`);
+let r = await step("追加の質問", () => service.answer({ token: started.tokens[0], text: answer1 }, env, "smoke"));
+console.log(`相談者：${r.consultant.turns.at(-1).text}`);
 console.log(`職員：${answer2}`);
-r = await step("2 回目の回答", () => service.answer({ token: r.token, index: 0, text: answer2 }, env, "smoke"));
-const g = await step("採点", () => service.grade({ token: r.token, index: 0 }, env, "smoke"));
+r = await step("2 回目の回答", () => service.answer({ token: r.token, text: answer2 }, env, "smoke"));
+const g = await step("採点", () => service.grade({ token: r.token }, env, "smoke"));
 const s = g.grade;
 console.log(`${s.total} 点（正確さ ${s.accuracy}・要点 ${s.coverage}・伝え方 ${s.delivery}）　${s.one_line}`);
 console.log(`模範回答：${s.model_answer}`);

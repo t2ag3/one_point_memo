@@ -869,7 +869,8 @@ const flaskBackend = {
 };
 
 // ---- 地獄級の通信：Cloudflare 版（サーバーは状態を持たない。署名付きのトークンを毎回送り、新しいトークンを受け取る） ----
-// hellRun.server：サーバーが最後に返した画面の形。hellRun.local：待っている・失敗した相談者（番号ごと）。
+// トークンは相談者ごと（hellRun.tokens）。始めるときは 1 人目の相談だけを待ち、2 人目からは裏で作る。
+// hellRun.server：サーバーが返した画面の形（相談者ごとに差し替える）。hellRun.local：待っている・失敗した相談者（番号ごと）。
 // hellRun.grades：採点の結果（番号ごと）。画面に出す形は cloudView() で組み立てる。
 
 function roundHalfEven(x) { // サーバー（Python の round）と同じ丸め
@@ -908,13 +909,15 @@ function rerender() {
   else if (!$("hell").hidden) renderHell();
 }
 
-// トークンを書き換える要求は 1 つずつ順に送る（同時に送ると、片方の変更が消えるため）
-function withToken(fn) {
-  const run = (hellRun.chain || Promise.resolve()).then(() => fn(hellRun.token));
-  hellRun.chain = run.catch(() => {});
+// 同じ相談者のトークンを書き換える要求は 1 つずつ順に送る（同時に送ると、片方の変更が消えるため）。
+// 別の相談者への要求は、待たずに送る
+function withToken(index, fn) {
+  const chains = hellRun.chains || (hellRun.chains = {});
+  const run = (chains[index] || Promise.resolve()).then(() => fn(hellRun.tokens[index]));
+  chains[index] = run.catch(() => {});
   return run.then((res) => {
-    hellRun.token = res.token;
-    hellRun.server = res.view;
+    hellRun.tokens[index] = res.token;
+    hellRun.server.consultants[index] = res.consultant;
     cloudBackend.save();
     return res;
   });
@@ -923,7 +926,7 @@ function withToken(fn) {
 async function cloudOpen(index) {
   hellRun.local[index] = { status: "opening", started: Date.now() };
   try {
-    await withToken((token) => api("api/hell/answer", { token, index }));
+    await withToken(index, (token) => api("api/hell/answer", { token }));
     delete hellRun.local[index];
   } catch (e) {
     hellRun.local[index] = { status: "error", error: e.message, failed: "open", started: Date.now() };
@@ -934,7 +937,7 @@ async function cloudOpen(index) {
 async function cloudGrade(index) {
   hellRun.local[index] = { status: "grading", started: Date.now() };
   try {
-    hellRun.grades[index] = await api("api/hell/grade", { token: hellRun.token, index });
+    hellRun.grades[index] = await api("api/hell/grade", { token: hellRun.tokens[index] });
     delete hellRun.local[index];
     cloudBackend.save();
   } catch (e) {
@@ -946,14 +949,14 @@ async function cloudGrade(index) {
 const cloudBackend = {
   async start(body) {
     const res = await api("api/hell", { ...body, turnstile: await turnstileToken() });
-    return { sid: "cloud", token: res.token, server: res.view };
+    return { sid: "cloud", tokens: res.tokens, server: res.view };
   },
   async resume(saved) {
-    const { token, grades } = JSON.parse(saved);
-    const res = await api("api/hell/view", { token });
-    return { sid: "cloud", token: res.token, server: res.view, grades: grades || {} };
+    const { tokens, grades } = JSON.parse(saved);
+    const res = await api("api/hell/view", { tokens });
+    return { sid: "cloud", tokens: res.tokens, server: res.view, grades: grades || {} };
   },
-  save() { sessionStorage.setItem(HELL_KEY, JSON.stringify({ token: hellRun.token, grades: hellRun.grades })); },
+  save() { sessionStorage.setItem(HELL_KEY, JSON.stringify({ tokens: hellRun.tokens, grades: hellRun.grades })); },
   // 最初の相談が作れていない相談者と、採点がまだの相談者を、裏で進める
   kick() {
     hellRun.server.consultants.forEach((c, i) => {
@@ -971,7 +974,7 @@ const cloudBackend = {
       rerender();
     }
     try {
-      await withToken((token) => api("api/hell/answer", { token, index, text }));
+      await withToken(index, (token) => api("api/hell/answer", { token, text }));
       delete hellRun.local[index];
     } catch (e) {
       if (!first) throw e;
