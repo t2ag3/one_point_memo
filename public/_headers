@@ -1,0 +1,3 @@
+# 検索エンジンに載せない（tools/build_cloudflare.py が作るファイル）
+/*
+  X-Robots-Tag: noindex, nofollow
