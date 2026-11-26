@@ -1,5 +1,6 @@
 # 一口メモ道場の Cloudflare Pages の設定（README.md の手順で使う）
 # プロジェクトは、コマンドの --project-name hitokuchi-dojo で指定する
+name = "one-point-memo"
 pages_build_output_dir = "public"
 compatibility_date = "2026-11-01"
 
