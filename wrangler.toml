@@ -6,8 +6,8 @@ compatibility_date = "2026-11-01"
 
 [vars]
 # AI のモデル（OpenRouter のモデル ID）。相談者と採点で別々に変えられる
-MODEL_CONSULT = "nvidia/nemotron-3.5-lightning:free"
-MODEL_GRADE = "nvidia/nemotron-3.5-lightning:free"
+MODEL_CONSULT = "anthropic/claude-opus-5.5"
+MODEL_GRADE = "anthropic/claude-opus-5.5"
 # 最初のモデルが使えないときに試す予備のモデル（カンマ区切り。空なら使わない）
 MODEL_FALLBACKS = ""
 # "0" にすると、JSON の形の指定（response_format）を送らない（モデルが対応していないとき）
